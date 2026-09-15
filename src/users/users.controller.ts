@@ -20,7 +20,7 @@ export class UsersController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   getMe(@Request() req: any) {
-    console.log(req.user);
+    // console.log(req.user);
     return req.user;
   }
 

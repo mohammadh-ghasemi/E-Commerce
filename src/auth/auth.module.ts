@@ -18,7 +18,7 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy.js';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
         signOptions: {
-          expiresIn: '15m',
+          expiresIn: '10s',
         },
       }),
     }),

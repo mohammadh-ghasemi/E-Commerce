@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, ExtractJwt } from 'passport-jwt';
@@ -20,7 +20,13 @@ export class RefreshTokenStrategy extends PassportStrategy(
       secretOrKey: configService.get<string>('REFRESH_TOKEN_SECRET') || '',
     });
   }
-  async validate(payload: { sub: number }) {
-    return this.usersService.findById(payload.sub);
+  async validate(payload: { sub: number; jti: string }) {
+    const user = await this.usersService.findById(payload.sub);
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    return { user, jti: payload.jti };
   }
 }

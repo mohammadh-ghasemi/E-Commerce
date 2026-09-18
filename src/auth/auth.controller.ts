@@ -57,9 +57,25 @@ export class AuthController {
 
   @Get('/refresh')
   @UseGuards(RefreshTokenGuard)
-  refreshToken(@Request() req: any) {
-    return this.authService.refresh(req.user);
+  async refresh(
+    @Request() req: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { access_token, refresh_token } = await this.authService.refresh(
+      req.user.user,
+      req.user.jti,
+    );
+
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/auth/refresh',
+    });
+
+    return {
+      access_token,
+    };
   }
 }
-
-// git commit -m "chore: add redis infrastructure"

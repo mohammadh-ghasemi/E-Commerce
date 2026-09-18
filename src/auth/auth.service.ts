@@ -9,6 +9,8 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/entities/user.entity.js';
 import { emit } from 'process';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'crypto';
+import { RedisService } from '../infrastructure/redis/redis.service.js';
 
 @Injectable()
 export class AuthService {
@@ -16,6 +18,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
   ) {}
 
   async validateUser(email: string, password: string) {
@@ -43,7 +46,7 @@ export class AuthService {
 
     const user = await this.usersService.create(email, password);
 
-    return this.login(user);
+    return await this.login(user);
   }
 
   async login(user: User) {
@@ -52,24 +55,77 @@ export class AuthService {
       email: user.email,
       role: user.role,
     };
-    const access_token = this.jwtService.sign(payload);
+
+    const access_token = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
+
+    const jti = randomUUID();
+
     const refresh_token = this.jwtService.sign(
-      { sub: user.id },
+      { sub: user.id, jti },
       {
         secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
         expiresIn: '7d',
       },
     );
+
+    await this.redisService.set(
+      `refresh:${jti}`,
+      String(user.id),
+      7 * 24 * 60 * 60,
+    );
+
     return { access_token, refresh_token };
   }
 
-  refresh(user: any) {
+  async refresh(user: User, jti: string) {
+    const key = `refresh:${jti}`;
+
+    const storeUserId = await this.redisService.getDel(key);
+
+    if (!storeUserId) {
+      throw new UnauthorizedException('Refresh token has been revoked');
+    }
+
+    if (storeUserId !== String(user.id)) {
+      throw new UnauthorizedException();
+    }
+
+    // Access token
     const payload = {
       sub: user.id,
       email: user.email,
       role: user.role,
     };
+    const access_token = this.jwtService.sign(payload, {
+      expiresIn: '15m',
+    });
 
-    return { access_token: this.jwtService.sign(payload) };
+    // Refresh token
+    const newJti = randomUUID();
+    const newRefreshToken = this.jwtService.sign(
+      {
+        sub: user.id,
+        jti: newJti,
+      },
+      {
+        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+        expiresIn: '7d',
+      },
+    );
+
+    // save in redis  =>  "refresh:uuid": user.id
+    await this.redisService.set(
+      `refresh:${newJti}`,
+      String(user.id),
+      7 * 24 * 60 * 60,
+    );
+
+    // return { access_token: this.jwtService.sign(payload) };
+    return {
+      access_token,
+      refresh_token: newRefreshToken,
+    };
   }
 }

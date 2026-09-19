@@ -98,6 +98,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
     };
+
     const access_token = this.jwtService.sign(payload, {
       expiresIn: '15m',
     });

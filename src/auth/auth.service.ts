@@ -128,4 +128,8 @@ export class AuthService {
       refresh_token: newRefreshToken,
     };
   }
+
+  async logout(jti: string) {
+    await this.redisService.del(`refresh:${jti}`);
+  }
 }

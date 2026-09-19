@@ -49,7 +49,7 @@ export class AuthController {
       // secure: true,
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/auth/refresh',
+      path: '/auth',
     });
 
     return { access_token };
@@ -71,11 +71,25 @@ export class AuthController {
       secure: false,
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/auth/refresh',
+      path: '/auth',
     });
 
     return {
       access_token,
+    };
+  }
+
+  @Post('/logout')
+  @UseGuards(RefreshTokenGuard)
+  async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
+    await this.authService.logout(req.user.jti);
+
+    res.cookie('refresh_token', '', {
+      path: '/auth',
+    });
+
+    return {
+      message: 'Logged out successfully',
     };
   }
 }

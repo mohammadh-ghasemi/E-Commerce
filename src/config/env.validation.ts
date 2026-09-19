@@ -4,6 +4,10 @@ export const envSchema = z.object({
   ACCESS_TOKEN_SECRET: z.string().min(1),
   REFRESH_TOKEN_SECRET: z.string().min(1),
 
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
+
   DB_HOST: z.string().min(1),
 
   DB_PORT: z.coerce.number().int().positive(),

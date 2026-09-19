@@ -18,6 +18,12 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   async signup(
     @Body() body: CreateUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -29,7 +35,7 @@ export class AuthController {
 
     res.cookie('refresh_token', refresh_token, {
       httpOnly: true,
-      // secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/auth/refresh',
@@ -53,7 +59,7 @@ export class AuthController {
 
     res.cookie('refresh_token', refresh_token, {
       httpOnly: true,
-      // secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/auth',
@@ -75,7 +81,7 @@ export class AuthController {
 
     res.cookie('refresh_token', refresh_token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/auth',
@@ -91,7 +97,15 @@ export class AuthController {
   async logout(@Request() req: any, @Res({ passthrough: true }) res: Response) {
     await this.authService.logout(req.user.jti);
 
-    res.cookie('refresh_token', '', {
+    // res.cookie('refresh_token', '', {
+    //   path: '/auth',
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === 'production',
+    //   sameSite: 'strict',
+    //   maxAge: 0,
+    // });
+
+    res.clearCookie('refresh_token', {
       path: '/auth',
     });
 

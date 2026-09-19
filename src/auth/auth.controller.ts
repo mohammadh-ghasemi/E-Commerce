@@ -12,6 +12,7 @@ import { AuthService } from './auth.service.js';
 import type { Response } from 'express';
 import { RefreshTokenGuard } from './guards/refresh-token.guard.js';
 import { CreateUserDto } from '../users/dto/create-user.dto.js';
+import { Throttle } from '@nestjs/throttler';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -38,6 +39,12 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60_000,
+    },
+  })
   @UseGuards(LocalAuthGuard)
   async login(@Request() req: any, @Res({ passthrough: true }) res: Response) {
     const { access_token, refresh_token } = await this.authService.login(

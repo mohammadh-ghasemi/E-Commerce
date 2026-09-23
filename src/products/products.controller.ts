@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
@@ -16,6 +17,7 @@ import { Roles } from '../auth/decorators/roles.decorator.js';
 import { UserRole } from '../users/enums/user-role.enum.js';
 import { CreateProductDto } from './dto/create-product.dto.js';
 import { UpdateProductDto } from './dto/update-product.dto.js';
+import { ProductQueryDto } from './dto/product-query.dto.js';
 
 @Controller('products')
 export class ProductsController {
@@ -29,8 +31,8 @@ export class ProductsController {
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query() query: ProductQueryDto) {
+    return this.productsService.findAll(query);
   }
 
   @Get('/:id')

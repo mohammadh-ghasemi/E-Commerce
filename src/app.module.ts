@@ -9,6 +9,7 @@ import { RedisModule } from './infrastructure/redis/redis.module.js';
 import { envSchema } from './config/env.validation.js';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { ProductsModule } from './products/products.module.js';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { APP_GUARD } from '@nestjs/core';
     RedisModule,
     UsersModule,
     AuthModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { Category } from '../../categories/entities/category.entity.js';
 
@@ -47,8 +48,13 @@ export class Product {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Category, (category) => category.products, {
+  @ManyToOne(() => Category, {
     nullable: false,
   })
+  @JoinColumn({ name: 'category_id' })
   category: Category;
+  // @ManyToOne(() => Category, (category) => category.products, {
+  //   nullable: false,
+  // })
+  // category: Category;
 }
